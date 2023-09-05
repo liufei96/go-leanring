@@ -554,5 +554,168 @@ func defaultValueDemo1() {
 }
 ```
 
+## 2.14 基本数据类型的相互转换
 
+### 2.14.1 基本介绍
 
+Golang 和 java / c 不同，Go 在不同类型的变量之间赋值时需要显式转换。也就是说Golang中数据类型不能自动转换。
+
+### 2.14.2 基本语法
+
+表达式 T(v) 将值 v 转换为类型 T 
+
+**T**: 就是数据类型，比如 int32，int64，float32 等等 
+
+**v**: 就是需要转换的变量
+
+### 2.14.3 案例演示
+
+```go
+func changeDemo1() {
+    var i int32 = 100
+    var n1 float32 = float32(i)
+    var n2 int8 = int8(i)
+    var n3 int64 = int64(i)
+    fmt.Printf("i=%v, n1=%v, n2=%v, n3=%v", i, n1, n2, n3)
+}
+```
+
+### 2.14.4 基本数据类型相互转换的注意事项
+
+**1) Go 中，数据类型的转换可以是从 表示范围小-->表示范围大，也可以范围大--->范围小2) 被转换的是变量存储的数据(即值)，变量本身的数据类型并没有变化！**
+
+**2) 被转换的是变量存储的数据(即值)，变量本身的数据类型并没有变化！**
+
+```go
+func changeDemo2() {
+    var i int32 = 100
+    var n1 float32 = float32(i)
+    var n2 int8 = int8(i)
+    var n3 int64 = int64(i)
+    fmt.Printf("i=%v, n1=%v, n2=%v, n3=%v", i, n1, n2, n3)
+    // 被转换的是变量存储的数据(即值)，变量本身的数据类型并没有变化！
+    fmt.Printf("i type is %T\n", i) // i type is int32
+}
+```
+
+**3) 在转换中，比如将 int64 转成 int8 【-128---127】 ，编译时不会报错，只是转换的结果是按溢出处理，和我们希望的结果不一样。 因此在转换时，需要考虑范围**
+
+```go
+// 在转换中，比如将 int64 转成 int8 【-128~127】,编译时不会报错
+// 只是转换的结果是按溢出处理，和我们希望的结果不一样
+func changeDemo3() {
+    var num1 int64 = 999999
+    var num2 int8 = int8(num1)
+    fmt.Println("num2=", num2) // num2= 63
+}
+```
+
+## 2.15 基本数据类型和string的转换
+
+### 2.15.1 基本介绍
+
+在程序开发中，我们经常将基本数据类型转成 string，或者将 string 转成基本数据类型。
+
+### 2.15.2 基本类型转 string 类型
+
+**方式 1：fmt.Sprintf("%参数", 表达式) 【个人习惯这个，灵活】**
+
+函数的介绍：
+
+![image-20230905223815524](./img/image-20230905223815524.png)
+
+参数需要和表达式的数据类型相匹配 
+
+fmt.Sprintf().. 会返回转换后的字符串
+
+案例演示
+
+```go
+func changeStringDemo1() {
+    var num1 int = 99
+    var num2 float64 = 23.456
+    var b bool = true
+    var myChar byte = 'h'
+    var str string // 空的str
+
+    str = fmt.Sprintf("%d", num1)
+    fmt.Printf("str type %T str = %q\n", str, str) // str type string str = "99"
+
+    str = fmt.Sprintf("%f", num2)
+    fmt.Printf("str type %T str = %q\n", str, str) // str type string str = "23.456000"
+
+    str = fmt.Sprintf("%t", b)
+    fmt.Printf("str type %T str = %q\n", str, str) // str type string str = "true"
+
+    str = fmt.Sprintf("%c", myChar)
+    fmt.Printf("str type %T str = %q\n", str, str) // str type string str = "h"
+}
+```
+
+**方式 2：使用 strconv 包的函数**
+
+![image-20230905225426096](./img/strconva_itoa.png)
+
+```go
+func changeStringDemo2() {
+    var num5 int64 = 99
+    // Itoa是FormatInt(i, 10) 的简写。
+    str := strconv.Itoa(int(num5))
+    fmt.Printf("str type %T str = %q\n", str, str) // str type string str = "99"
+}
+```
+
+### 2.15.3 string 类型转基本数据类型
+
+**使用时 strconv 包的函数**
+
+![image-20230905225559749](./img/strconv.png)
+
+**案例演示**
+
+```go
+func changeStringDemo3() {
+    var str string = "true"
+    var b bool
+    // 1. strconv.ParseBool(str) 会返回两个值 （value bool, err error）
+    // 2. 因为我只想获取到value bool，不想获取err 所以我使用_忽略
+    b, _ = strconv.ParseBool(str)
+    fmt.Printf("b type %T b=%v\n", b, b)
+
+    var str2 string = "1234567"
+    var n1 int64
+    var n2 int
+    n1, _ = strconv.ParseInt(str2, 10, 64)
+    n2 = int(n1)
+    fmt.Printf("n1 type %T n1=%v\n", n1, n1)
+    fmt.Printf("n2 type %T n2=%v\n", n2, n2)
+
+    var str3 string = "123.456"
+    var f1 float64
+    // 第二个参数是bitSize 表示f的来源类型(32: float32、64: float64)
+    f1, _ = strconv.ParseFloat(str3, 64)
+    fmt.Printf("f1 type %T f1=%v\n", f1, f1)
+}
+```
+
+**说明一下**
+
+### 2.15.4 string 转基本数据类型的注意事项
+
+在将 String 类型转成 基本数据类型时，**要确保 String 类型能够转成有效的数据**，比如我们可以把 "123" , 转成一个整数，但是不能把 "hello" 转成一个整数，如果这样做，Golang 直接将其转成0，其它类型也是一样的道理. float => 0 bool => false
+
+案例说明：
+
+```go
+func changeStringDemo4() {
+    var str4 string = "hello"
+    var n3 int64 = 11
+    // 第二个参数是base，表示进制的意思，2~32
+    n3, _ = strconv.ParseInt(str4, 10, 64)
+    fmt.Printf("n3 type %T n3=%v\n", n3, n3) // n3 type int64 n3=0
+}
+```
+
+**没有转成功，n3 = 0 //使用的是其默认值**
+
+## 2.16 指针
