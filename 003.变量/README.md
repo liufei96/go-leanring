@@ -804,3 +804,80 @@ func varPointDemo2() {
 **3) 内存的栈区和堆区示意图**
 
 ![image-20230907230739547](./img/内存的栈区和堆区.png)
+
+## 2.18 标识符的命名规范
+
+### 2.18.1 标识符概念
+
+Golang 对各种变量、方法、函数等命名时使用的字符序列称为标识符
+
+凡是自己可以起名字的地方都叫标识符
+
+### 2.18.2 标识符的命名规则
+
+1) 由 26 个英文字母大小写，0-9 ，_ 组成 
+2) 数字不可以开头。var num int //ok var 3num int //error 
+3) Golang 中严格区分大小写。 var num int var Num int 说明：在 golang 中，num 和 Num 是两个不同的变量 
+4) 标识符不能包含空格。
+5) 下划线"_"本身在 Go 中是一个特殊的标识符，称为空标识符。可以代表任何其它的标识符，但是它对应的值会被忽略(比如：忽略某个返回值)。所以仅能被作为占位符使用，不能作为标识符使用
+
+```go
+// 这种写法是不对的
+var _ int = 40
+fmt.Println(_)
+```
+
+6. 不能以系统保留关键字作为标识符（一共有 25 个），比如 break，if 等等...
+
+### 2.18.3 标识符的案例
+
+```go
+hello // ok
+hello12 // ok
+1hello // error ,不能以数字开头
+h-b // error ,不能使用 - 
+x h // error, 不能含有空格
+h_4 // ok
+_ab // ok
+int // ok , 我们要求大家不要这样使用
+float32 // ok , 我们要求大家不要这样使用
+_ // error
+Abc // ok
+```
+
+### 2.18.4 标识符命名注意事项
+
+1. 包名：保持 package 的名字和目录保持一致，尽量采取有意义的包名，简短，有意义，不要和标准库不要冲突 fmt
+
+2) 变量名、函数名、常量名：采用驼峰法
+
+   ```go
+   var stuName string = "tom" // 形式xxxYyyyZzz
+   var goodPrice float32 = 1234.5 
+   ```
+
+3. 如果变量名、函数名、常量名首字母大写，则可以被其他的包访问；如果首字母小写，则只能在本包中使用 ( 注：可以简单的理解成，首字母大写是公开的，首字母小写是私有的) ,在golang没有public , private 等关键字。
+
+## 2.19 系统保留关键字
+
+在go中，为了简化代码编译过程中对代码的解析，其定义的保留关键字只有25个
+
+| break    | default     | func   | interface | select |
+| -------- | ----------- | ------ | --------- | ------ |
+| case     | defer       | go     | map       | struct |
+| chan     | else        | goto   | package   | switch |
+| const    | fallthrough | if     | range     | type   |
+| continue | for         | import | return    | var    |
+
+## 2.20 系统的预定义标识符
+
+除了保留关键字，Go还提供了36个预定的标识符，其包括基础数据类型和系统内嵌函数
+
+| append    | bool       | byte   | cap   | close   | complex |
+| --------- | ---------- | ------ | ----- | ------- | ------- |
+| complex64 | complex128 | uint16 | copy  | false   | float32 |
+| float64   | imag       | int    | int8  | int16   | uint32  |
+| int32     | int64      | iota   | len   | make    | new     |
+| nil       | panic      | unit64 | print | println | real    |
+| recover   | string     | true   | unit  | unit8   | uintprt |
+
