@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	util "go-leanring/006.func_package_error/utils"
+	"go-leanring/006.func_package_error/递归"
 )
 
 func main() {
@@ -18,6 +19,12 @@ func main() {
 
 	sum := getSum(10, 20)
 	fmt.Println("main sum = ", sum)
+
+	// 调用getSumAndSub
+	res1, res2 := getSumAndSub(1, 2)
+	fmt.Printf("sum=%v, sub=%v", res1, res2)
+
+	递归.Test1(4)
 }
 
 func test(n1 int) {
@@ -29,4 +36,10 @@ func getSum(n1 int, n2 int) int {
 	sum := n1 + n2
 	fmt.Println("getSum() sum = ", sum)
 	return sum
+}
+
+func getSumAndSub(n1 int, n2 int) (int, int) {
+	sum := n1 + n2
+	sub := n1 - n2
+	return sum, sub
 }
