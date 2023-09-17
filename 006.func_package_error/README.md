@@ -485,3 +485,84 @@ func main() {
 	fmt.Println("第1天桃子的数量=", res2) // 1534
 }
 ```
+
+## 14. 函数使用的注意事项和细节讨论
+
+1. 函数的形参列表可以是多个，返回值列表也可以是多个。 
+
+2) 形参列表和返回值列表的数据类型可以是值类型和引用类型。 
+3)  函数的命名遵循标识符命名规范，首字母不能是数字，首字母大写该函数可以被本包文件和其它包文件使用，类似 public , 首字母小写，只能被本包文件使用，其它包文件不能使用，类似private
+
+4) 函数中的变量是局部的，函数外不生效【案例说明】
+
+5) 基本数据类型和数组默认都是值传递的，即进行值拷贝。在函数内修改，不会影响到原来的值。
+
+   ```go
+   func main() {
+   	// n的值不会改变
+   	n := 10
+   	test3(n)
+   	fmt.Println("main() n=", n)
+   }
+   
+   func test3(n int) {
+   	n = n + 10
+   	fmt.Println("test3 n=", n)
+   }
+   ```
+
+   输出：
+
+   ```go
+   test3 n= 20
+   main() n= 10
+   ```
+
+6) 如果希望函数内的变量能修改函数外的变量(指的是默认以值传递的方式的数据类型)，可以传入变量的地址&，函数内以指针的方式操作变量。从效果上看类似引用 。
+
+   ```go
+   func main() {
+       // 可以传入变量地址
+   	num := 20
+   	test4(&num)
+   	fmt.Println("main() num=", num)
+   }
+   
+   func test4(n *int) {
+   	*n = *n + 20
+   	fmt.Println("test4 n=", *n) // 如果直接打印n，打印的是变量地址
+   }
+   ```
+
+   输出
+
+   ```go
+   test4 n= 40
+   main() num= 40 
+   ```
+
+   7. Go 函数不支持函数重载
+   7. 在 Go 中，**函数也是一种数据类型**，可以赋值给一个变量，则该变量就是一个函数类型的变量了。通过该变量可以对函数调用
+
+   ```go
+   func main() {
+       a := getSum
+       fmt.Printf("a的类型%T,getSum类型时%T\n", a, getSum)
+       result := a(10, 20)
+       fmt.Println("result=", result)
+   }
+   
+   func getSum(n1 int, n2 int) int {
+   	return n1 + n2
+   }
+   ```
+
+   输出
+
+   ```go
+   a的类型func(int, int) int,getSum类型时func(int, int) int
+   result= 30
+   ```
+
+   9. 函数既然是一种数据类型，因此在 Go 中，函数可以作为形参，并且调用
+   10. 为了简化数据类型定义，Go 支持自定义数据类型
