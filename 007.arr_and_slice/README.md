@@ -494,11 +494,11 @@ func demo9() {
 
 ## 7.15 切片的使用的注意事项和细节讨论
 
-1) 切片初始化时 var slice = arr[startIndex:endIndex]
+1. 切片初始化时 var slice = arr[startIndex:endIndex]
 
    说明：从 arr 数组下标为 startIndex，取到 下标为 endIndex 的元素(不含arr[endIndex])。
 
-2) 切片初始化时，仍然不能越界。范围在 [0-len(arr)] 之间，但是可以动态增长
+2. 切片初始化时，仍然不能越界。范围在 [0-len(arr)] 之间，但是可以动态增长
 
    ```go
    var slice = arr[0:end]  // 可以简写 var slice = arr[:end]
@@ -506,7 +506,197 @@ func demo9() {
    var slice = arr[0:len(arr)]  // 可以简写: var slice = arr[:]
    ```
 
-3) cap 是一个内置函数，用于统计切片的容量，即最大可以存放多少个元素。
+3. cap 是一个内置函数，用于统计切片的容量，即最大可以存放多少个元素。
 
-4) 切片定义完后，还不能使用，因为本身是一个空的，需要让其引用到一个数组，或者make一个空间供切片来使用
-5) 切片可以继续切片
+4. 切片定义完后，还不能使用，因为本身是一个空的，需要让其引用到一个数组，或者make一个空间供切片来使用
+
+5. 切片可以继续切片
+
+   ```go
+   // 切片可以继续切片
+   func demo10() {
+       var arr = [...]int{10, 20, 30, 40, 50}
+   
+       slice := arr[1:4]
+       for i := 0; i < len(slice); i++ {
+          fmt.Printf("slice=[%v]=%v", i, slice[i])
+       }
+   
+       fmt.Println()
+   
+       // 使用for--range 方式遍历切片
+       for i, v := range slice {
+          fmt.Printf("i=%v v=%v\n", i, v)
+       }
+   
+       slice2 := slice[1:2]
+       slice2[0] = 100 // 因为arr slice slice2 指向的数据空间都是同一个，这里修改了，都会变的
+   
+       fmt.Println("slice2=", slice2)
+       fmt.Println("slice=", slice)
+       fmt.Println("arr=", arr)
+   }
+   ```
+
+   输出内容：
+
+   ```go
+   slice=[0]=20slice=[1]=30slice=[2]=40
+   i=0 v=20
+   i=1 v=30
+   i=2 v=40
+   slice2= [100]
+   slice= [20 100 40]
+   arr= [10 20 100 40 50]
+   ```
+
+6. 用 append 内置函数，可以对切片进行动态追加
+
+   ```go
+   // 使用append可以对切片进行动态添加
+   func demo11() {
+       var slice3 = []int{100, 200, 300}
+       // 通过append直接给slice3追加内容
+       slice3 = append(slice3, 400, 500, 600)
+       fmt.Println("slice3=", slice3) // [100 200 300 400 500 600]
+   
+       // 通过append将切片slice3追加给slice3
+       slice3 = append(slice3, slice3...)
+       fmt.Println("slices3=", slice3) // [100 200 300 400 500 600 100 200 300 400 500 600]
+   }
+   ```
+
+   对上面代码的小结
+
+   ![image-20231007220849570](./img/image-20231007220849570.png)
+
+   **切片 append 操作的底层原理分析:**
+
+   > 切片 append 操作的本质就是对数组扩容
+   >
+   > go 底层会创建一下新的数组 newArr(安装扩容后大小)
+   >
+   > 将 slice 原来包含的元素拷贝到新的数组 newArr
+   >
+   > slice 重新引用到 newArr
+   >
+   > 注意 newArr 是在底层来维护的，程序员不可见
+
+7. 切片的拷贝操作
+
+   切片使用 copy 内置函数完成拷贝，举例说明
+
+   ```go
+   // 切片的copy
+   func sliceCopy() {
+       // 切片的拷贝操作
+       // 切片使用copy内置函数完成拷贝
+       fmt.Println()
+       var slice4 = []int{1, 2, 3, 4, 5}
+       var slice5 = make([]int, 10)
+       copy(slice5, slice4)
+       fmt.Println("slice4=", slice4) // [1 2 3 4 5]
+       fmt.Println("slice5=", slice5) // [1 2 3 4 5 0 0 0 0 0]
+   }
+   ```
+
+   **对上面代码的说明:**
+
+   (1) copy(para1, para2) 参数的数据类型是切片
+
+   (2) 按照上面的代码来看, slice4 和 slice5 的数据空间是独立，相互不影响，也就是说slice4[0]=999, slice5[0] 仍然是 1
+
+8. 关于拷贝的注意事项
+
+   ```go
+   // 思考下面的代码有没有错误
+   var a []int = []int{1,2,3,4,5}
+   var slice = make([]int, 1)
+   fmt.Println(slice) // [0]
+   copy(slice, a)
+   fmt.Println(slice) // [1]
+   ```
+
+   说明: 上面的代码没有问题，可以运行, 最后输出的是 [1]
+
+9. 切片是引用类型，所以在传递时，遵守引用传递机制。看两段代码，并分析底层原理
+
+   ```go
+   func main() {
+       var slice = []int{1, 2, 3, 4}
+       test03(slice)
+       fmt.Println("test03 slice=", slice) //  [100 2 3 4]
+   }
+   
+   func test03(slice []int) {
+   	slice[0] = 100 // 这里修改，会改变实参
+   }
+   ```
+
+   切片是引用类型，在传递时，遵守引用传递机器
+
+   数组属值类型，值传递
+
+## 7.16 string 和 slice
+
+1. string 底层是一个 byte 数组，因此 string 也可以进行切片处理 案例演示：
+
+   ```go
+   // string 底层是一个 byte 数组，因此 string 也可以进行切片处理
+   func stringDemo1() {
+       str := "hello杭州"
+       slice := str[2:]
+       fmt.Println("slice=", slice) // llo杭州
+   }
+   ```
+
+2. string 和切片在内存的形式，以 "abcd" 画出内存示意图
+
+   ![image-20231007222636244](./img/image-20231007222636244.png)
+
+3. string 是不可变的，也就说不能通过 str[0] = 'z' 方式来修改字符串
+
+   ![image-20231007222750855](./img/image-20231007222750855.png)
+
+4. 如果需要修改字符串，可以先将 string -> []byte / 或者 []rune -> 修改-> 重写转成string
+
+   ```go
+   // 如果需要修改字符串，可以先将 string -> []byte / 或者 []rune -> 修改-> 重写转成string
+   func stringDemo2() {
+       str := "hello杭州"
+       arr1 := []byte(str)
+       arr1[0] = 'z'
+       str = string(arr1)
+       fmt.Println("str=", str)
+   
+       // 细节，我们转换成[]byte后，可以处理英文和数字，但是不能处理中文
+       // 原因是 []byte 字节来处理，而一个汉字，是3个字节，因此就会出现乱码
+       // 解决方法是将 string 转成 []rune 即可，因为 []rune 是按字符处理，兼容汉字
+       arr2 := []rune(str)
+       arr2[0] = '北'
+       str = string(arr1)
+       fmt.Println("str=", str)
+   }
+   ```
+
+## 7.17 切片的课堂练习题
+
+> 说明：编写一个函数 fbn(n int) ，要求完成
+>
+> 1) 可以接收一个 n int 
+>
+> 2) 能够将斐波那契的数列放到切片中 
+> 3) 提示, 斐波那契的数列形式: arr[0] = 1; arr[1] = 1; arr[2]=2; arr[3] = 3; arr[4]=5; arr[5]=8
+
+```go
+func fbn(n int) []uint64 {
+    // 声明一个切片
+    fbnSlice := make([]uint64, n)
+    fbnSlice[0] = 1
+    fbnSlice[1] = 1
+    for i := 2; i < n; i++ {
+       fbnSlice[i] = fbnSlice[i-1] + fbnSlice[i-2]
+    }
+    return fbnSlice
+}
+```

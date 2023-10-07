@@ -26,11 +26,21 @@ func main() {
 
 	demo9()
 
+	demo10()
+
+	demo11()
+
+	sliceCopy()
+
 	sliceDemo()
 
 	makeDemo()
 
 	makeDemo2()
+
+	var slice = []int{1, 2, 3, 4}
+	test03(slice)
+	fmt.Println("test03 slice=", slice) //  [100 2 3 4]
 }
 
 func demo() {
@@ -192,12 +202,70 @@ func demo9() {
 	fmt.Println(slice) // [21 30 40]
 }
 
+// 切片可以继续切片
+func demo10() {
+	var arr = [...]int{10, 20, 30, 40, 50}
+
+	slice := arr[1:4]
+	for i := 0; i < len(slice); i++ {
+		fmt.Printf("slice=[%v]=%v", i, slice[i])
+	}
+
+	fmt.Println()
+
+	// 使用for--range 方式遍历切片
+	for i, v := range slice {
+		fmt.Printf("i=%v v=%v\n", i, v)
+	}
+
+	slice2 := slice[1:2]
+	slice2[0] = 100 // 因为arr slice slice2 指向的数据空间都是同一个，这里修改了，都会变的
+
+	fmt.Println("slice2=", slice2)
+	fmt.Println("slice=", slice)
+	fmt.Println("arr=", arr)
+}
+
+// 使用append可以对切片进行动态添加
+func demo11() {
+	var slice3 = []int{100, 200, 300}
+	// 通过append直接给slice3追加内容
+	slice3 = append(slice3, 400, 500, 600)
+	fmt.Println("slice3=", slice3) // [100 200 300 400 500 600]
+
+	// 通过append将切片slice3追加给slice3
+	slice3 = append(slice3, slice3...)
+	fmt.Println("slices3=", slice3) // [100 200 300 400 500 600 100 200 300 400 500 600]
+}
+
+// 切片的copy
+func sliceCopy() {
+	// 切片的拷贝操作
+	// 切片使用copy内置函数完成拷贝
+	fmt.Println()
+	var slice4 = []int{1, 2, 3, 4, 5}
+	var slice5 = make([]int, 10)
+	copy(slice5, slice4)
+	fmt.Println("slice4=", slice4) // [1 2 3 4 5]
+	fmt.Println("slice5=", slice5) // [1 2 3 4 5 0 0 0 0 0]
+
+	var a []int = []int{1, 2, 3, 4, 5}
+	var slice = make([]int, 1)
+	fmt.Println(slice) // [0]
+	copy(slice, a)
+	fmt.Println(slice) // [1]
+}
+
 func test01(arr [3]int) {
 	arr[0] = 88
 }
 
 func test02(arr *[3]int) {
 	arr[0] = 88
+}
+
+func test03(slice []int) {
+	slice[0] = 100
 }
 
 func sliceDemo() {
