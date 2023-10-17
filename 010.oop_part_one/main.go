@@ -6,6 +6,9 @@ func main() {
 	oopDemo1()
 	oopDemo2()
 	oopDemo3()
+	oopDemo4()
+	oopDemo5()
+	oopDemo6()
 }
 
 // 张老太养了两只猫猫：一只名字叫小白，今年3岁，白色。还有一只叫小花，今年100岁，花色。
@@ -86,4 +89,35 @@ func oopDemo3() {
 	p1.map1["key1"] = "tom"
 
 	fmt.Println(p1)
+}
+
+type Person2 struct {
+	Name string
+	Age  int
+}
+
+func oopDemo4() {
+	p2 := Person2{"mary", 20}
+	//p2.Name = "tom"
+	//p2.Age = 18
+	fmt.Println(p2)
+}
+
+func oopDemo5() {
+	var p3 *Person2 = new(Person2)
+	// 因为p3是一个指针，因此标准的给字段赋值的方式
+	(*p3).Name = "tom"
+	p3.Age = 25 // 这样也行。原因：go的设计者为了程序使用方便，底层会对p3.Age = 25 进行处理。会给 p3 加上取值运算 (*p3).Age = 25
+	fmt.Println(p3)
+}
+
+func oopDemo6() {
+	var person *Person2 = &Person2{}
+	// 也可以直接赋值
+	// var person *Person2 = &Person2{"tom", 20}
+	// 因为p3是一个指针，因此标准的给字段赋值的方式
+	//person 是个指针，因此下面访问方式都有可以
+	(*person).Name = "lucy"
+	person.Age = 20
+	fmt.Println(person)
 }

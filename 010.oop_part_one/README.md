@@ -190,3 +190,178 @@ ok3: map[]
 ```
 
 4) 不同结构体变量的字段是独立，互不影响，一个结构体变量字段的更改，不影响另外一个, **结构体是值类型**。
+
+### 10.1.12 创建结构体变量和访问结构体字段
+
+- 方式 1-直接声明
+
+  > 案例演示: var person Person 前面我们已经说了。
+
+- 方式 2-{}
+
+  > ```go
+  > // 案例演示: var person Person = Person{}
+  > type Person2 struct {
+  >     Name string
+  >     Age  int
+  > }
+  > 
+  > func oopDemo4() {
+  >     p2 := Person2{"mary", 20}
+  >     //p2.Name = "tom"
+  > 	//p2.Age = 18
+  >     fmt.Println(p2) // {mary 20}
+  > }
+  > ```
+
+- 方式 3-&
+
+  > ```go
+  > // 案例: var person *Person = new (Person)
+  > func oopDemo5() {
+  >     var p3 *Person2 = new(Person2)
+  >     // 因为p3是一个指针，因此标准的给字段赋值的方式
+  >     (*p3).Name = "tom"
+  >     p3.Age = 25 // 这样也行。原因：go的设计者为了程序使用方便，底层会对p3.Age = 25 进行处理。会给 p3 加上取值运算 (*p3).Age = 25
+  >     fmt.Println(p3) // &{tom 25}
+  > }
+  > ```
+
+- 方式 4-{}
+
+  > ```go
+  > func oopDemo6() {
+  >     var person *Person2 = &Person2{}
+  >     // 也可以直接赋值
+  >     // var person *Person2 = &Person2{"tom", 20}
+  >     // 因为p3是一个指针，因此标准的给字段赋值的方式
+  >     //person 是个指针，因此下面访问方式都有可以
+  >     (*person).Name = "lucy"
+  >     person.Age = 20
+  >     fmt.Println(person) // &{lucy 20}
+  > }
+  > ```
+
+说明：
+
+1) 第 3 种和第 4 种方式返回的是 **结构体指针**。
+
+2) 结构体指针访问字段的标准方式应该是：`(*结构体指针).字段名 ，比如(*person).Name ="tom"`
+
+3) 但 go 做了一个简化，也支持 结构体指针.字段名, 比如 person.Name = "tom"。更加符合程序员使用的习惯，**go 编译器底层 对 person.Name 做了转化 (*person).Name。**
+
+### 10.1.13 struct 类型的内存分配机制(memory_allocated.go)
+
+**看一个思考题**
+
+![image-20231017230359251](./img/image-20231017230359251.png)
+
+**输出的结果是**: p2.Name = tom p1.Name = 小明
+
+**基本说明**
+
+> 变量总是存在内存种，那么结构体变量在内存种酒精是怎样存在的？
+
+**结构体在内存中示意图**
+
+![image-20231017230539929](./img/image-20231017230539929.png)
+
+**看下面代码，并分析原因**
+
+```go
+package main
+
+import "fmt"
+
+type Person3 struct {
+    Name string
+    Age  int
+}
+
+func main() {
+    var p1 Person3
+    p1.Age = 10
+    p1.Name = "小明"
+
+    var p2 *Person3 = &p1 // 这里是关键--> 画出示意图
+
+    //fmt.Println(*p2.Age) // 不能这样写，会报错，因为.的优先级比 * 的高
+    fmt.Println((*p2).Age)
+    fmt.Println(p2.Age)
+
+    p2.Name = "tom~"
+    fmt.Printf("p2.Name=%v p1.Name=%v \n", p2.Name, p1.Name)    // tom~ tom~
+    fmt.Printf("p2.Name=%v p1.Name=%v \n", (*p2).Name, p1.Name) // tom~ tom~
+
+    fmt.Printf("p1的地址%p \n", &p1)
+    fmt.Printf("p2的地址%p p2的值%p \n", &p2, p2)
+}
+```
+
+输出内容：
+
+```go
+10
+10
+p2.Name=tom~ p1.Name=tom~ 
+p2.Name=tom~ p1.Name=tom~ 
+p1的地址0xc00011c060 
+p2的地址0xc00014c018 p2的值0xc00011c060 
+```
+
+上面代码对应的内存图的分析：
+
+![image-20231017233622794](./img/image-20231017233622794.png)
+
+### 10.1.14 结构体使用注意事项和细节
+
+\1) 结构体的所有字段在内存中是连续的
+
+```go
+package main
+
+import "fmt"
+
+// 结构体
+type Point struct {
+    x int
+    y int
+}
+
+// 结构体
+type Rect struct {
+    leftUp, rightDown Point
+}
+
+// 结构体2
+type Rect2 struct {
+    leftUp, rightDown *Point
+}
+
+func main() {
+    r1 := Rect{Point{1, 2}, Point{3, 4}}
+    // r1 有四个int，在内存中是连续分布的
+    fmt.Printf("r1.leftUp.x 地址=%p r1.leftUp.y 地址=%p r1.rightDown.x 地址=%p r1.rightDown.y 地址=%p \n",
+       &r1.leftUp.x, &r1.leftUp.y, &r1.rightDown.x, &r1.rightDown.y)
+
+    // r2 有两个 *Point类型，这个两个 *Point 类型的本身地址也是连续的
+    // 但是他们指向的地址不一定连续
+    r2 := Rect2{&Point{10, 20}, &Point{30, 40}}
+    // 打印地址
+    fmt.Printf("r2.leftUp 地址=%p r2.rightDown 地址=%p \n",
+       &r2.leftUp, &r2.rightDown)
+
+    // 他们指向的地址不一定是连续的....，这个要看系统运行时时如何分配的
+    fmt.Printf("r2.leftUp 指向地址=%p r2.rightDown 指定地址=%p \n",
+       r2.leftUp, r2.rightDown)
+}
+```
+
+输出结果：
+
+```go
+r1.leftUp.x 地址=0xc0000101c0 r1.leftUp.y 地址=0xc0000101c8 r1.rightDown.x 地址=0xc0000101d0 r1.rightDown.y 地址=0xc0000101d8 
+r2.leftUp 地址=0xc00004a250 r2.rightDown 地址=0xc00004a258 
+r2.leftUp 指向地址=0xc0000180b0 r2.rightDown 指定地址=0xc0000180c0 
+```
+
