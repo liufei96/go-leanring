@@ -365,3 +365,414 @@ r2.leftUp 地址=0xc00004a250 r2.rightDown 地址=0xc00004a258
 r2.leftUp 指向地址=0xc0000180b0 r2.rightDown 指定地址=0xc0000180c0 
 ```
 
+\2) 结构体是用户单独定义的类型，和其它类型进行转换时需要有完全相同的字段(名字、个数和类型)
+
+\3) 结构体进行 type 重新定义(相当于取别名)，Golang 认为是新的数据类型，但是相互间可以强转
+
+```go
+type Student struct {
+    Name string
+    Age  int
+}
+
+type Stu Student
+
+func test01() {
+    var stu1 Student
+    var stu2 Stu
+    //stu2 = stu1  // 这里是错误的，下面是对的
+    stu2 = Stu(stu1)
+    fmt.Println(stu1, stu2)
+}
+
+type integer int
+
+func test02() {
+	var i integer = 10
+	var j int = 20
+	//j = i // 错误
+	j = int(i)
+	fmt.Println(i, j)
+}
+```
+
+\4) struct 的每个字段上，可以写上一个 tag, 该 tag 可以通过反射机制获取，常见的使用场景就是序列化和反序列化。
+
+序列化的使用场景:
+
+![image-20231018202618942](./img/image-20231018202618942.png)
+
+```go
+type Monster struct {
+    Name  string `json:"name"` // `json:"name"` 就是 struct tag
+    Age   int    `json:"age"`
+    skill string `json:"skill"`
+}
+
+func test03() {
+    // 1. 创建一个monster变量
+    monster := Monster{"牛魔王", 500, "芭蕉扇"}
+
+    // 2.将monster变量序列化为json格式字串
+    // json.Marshal(monster) 函数中使用反射，这个讲解反射时，会详细介绍
+    jsonstr, err := json.Marshal(monster)
+    if err != nil {
+       fmt.Println("json处理错误", err)
+    }
+    fmt.Println("jsonStr", string(jsonstr))
+}
+```
+
+## 10.2 方法
+
+### 10.2.1 基本介绍
+
+在某些情况下，我们要需要声明(定义)方法。比如 Person 结构体:除了有一些字段外( 年龄，姓名..),Person 结构体还有一些行为比如:可以说话、跑步..,通过学习，还可以做算术题。这时就要用方法才能完成。
+
+Golang 中的方法是**作用在指定的数据类型上的**(即：和指定的数据类型绑定)，因此**自定义类型**，**都可以有方法**，而不仅仅是 **struct**。
+
+### 10.2.2 方法的声明和调用
+
+```go
+type A struct {
+	Num int
+}
+func (a A) test() {
+	fmt.Println(a.Num)
+}
+```
+
+对上面的语法的说明
+
+1) func (a A) test() {} 表示 A 结构体有一方法，方法名为 test
+2) (a A) 体现 test 方法是和 A 类型绑定的
+
+举例说明
+
+```go
+func main() {
+	var stu Student
+    stu.Name = "tom"
+    stu.test()
+}
+
+type Student struct {
+    Name string
+    Age  int
+}
+
+func (stu Student) test() {
+    fmt.Println("test() name=", stu.Name)
+}
+```
+
+对上面的总结
+
+\1) test 方法和 Student类型绑定
+
+\2) test 方法只能通过 Student类型的变量来调用，而不能直接调用，也不能使用其它类型变量来调用
+
+\3) func (stu Student) test() {}... stu 表示哪个 Student变量调用，这个 stu 就是它的副本, 这点和函数传参非常相似。
+
+\4) stu 这个名字，有程序员指定，不是固定, 比如修改成 student 也是可以
+
+### 10.2.3 方法快速入门
+
+\1) 给 Student 结构体添加 speak 方法,输出 xxx 是一个好人
+
+```go
+func (stu Student) speak() {
+    fmt.Println(stu.Name, "是一个好人")
+}
+```
+
+\2) 给 Student  结构体添加 jisuan 方法,可以计算从 1+..+1000 的结果, 说明方法体内可以函数一样，进行各种运算
+
+```go
+func (stu Student) jisaun() {
+    res := 0
+    for i := 1; i <= 100; i++ {
+       res += i
+    }
+    fmt.Println(stu.Name, "计算的结果时=", res)
+}
+```
+
+\3) 给 Person 结构体 jisuan2 方法,该方法可以接收一个数 n，计算从 1+..+n 的结果  
+
+```go
+func (stu Student) jisaun2(n int) {
+    res := 0
+    for i := 1; i <= n; i++ {
+       res += i
+    }
+    fmt.Println(stu.Name, "计算的结果时=", res)
+}
+```
+
+\4) 给 Person 结构体添加 getSum 方法,可以计算两个数的和，并返回结果
+
+```go
+func (stu Student) getSum(n1 int, n2 int) int {
+    return n1 + n2
+}
+```
+
+\5) 方法的调用
+
+```go
+stu.speak()
+stu.jisaun()
+stu.jisaun2(20)
+res := stu.getSum(10, 20)
+fmt.Println("res=", res)
+```
+
+### 10.2.4 方法的调用和传参机制原理：(重要！)
+
+说明：
+
+>  方法的调用和传参机制和函数基本一样，不一样的地方是方法调用时，会将调用方法的变量，当做实参也传递给方法。下面我们举例说明。
+
+案例 1：
+
+> 画出前面 getSum 方法的执行过程+说明
+
+![image-20231018211949515](./img/image-20231018211949515.png)
+
+说明:
+
+> \1) 在通过一个变量去调用方法时，其调用机制和函数一样
+>
+> \2) 不一样的地方时，变量调用方法时，该变量本身也会作为一个参数传递到方法(如果变量是值类型，则进行值拷贝，如果变量是引用类型，则进行地质拷贝)
+
+案例 2
+
+> 请编写一个程序，要求如下：
+>
+> \1) 声明一个结构体 Circle, 字段为 radius 
+>
+> \2) 声明一个方法 area 和 Circle 绑定，可以返回面积。 
+>
+> \3) 提示：画出 area 执行过程+说明
+
+```go
+type Circle struct {
+    radius float64
+}
+
+func (c Circle) area() float64 {
+    return 3.14 * c.radius * c.radius
+}
+
+func main() {
+	var c Circle
+	c.radius = 4.0
+	res1 := c.area()
+	fmt.Println("res1=", res1)
+}
+```
+
+![image-20231018212504086](./img/image-20231018212504086.png)
+
+### 10.2.5 方法的声明(定义)
+
+```go
+func (recevier type) methodName (参数列表)(返回值列表) {
+	方法体
+    return 返回值
+}
+```
+
+> \1) 参数列表：表示方法输入
+>
+> \2) recevier type : 表示这个方法和 type 这个类型进行绑定，或者说该方法作用于type 类型
+>
+> \3) receiver type : type 可以是结构体，也可以其它的自定义类型
+>
+> \4) receiver : 就是 type 类型的一个变量(实例)，比如 ：Person 结构体的一个变量(实例)
+>
+> \5) 返回值列表：表示返回的值，可以多个
+>
+> \6) 方法主体：表示为了**实现某一功能代码**块
+>
+> \7) return 语句不是必须的。
+
+### 10.2.6 方法的注意事项和细节
+
+\1) 结构体类型是值类型，在方法调用中，遵守值类型的传递机制，是值拷贝传递方式
+
+\2) 如程序员希望在方法中，修改结构体变量的值，可以通过结构体指针的方式来处理
+
+![image-20231018212940478](./img/image-20231018212940478.png)
+
+\3) Golang 中的方法作用在指定的数据类型上的(即：和指定的数据类型绑定)，因此自定义类型，都可以有方法，而不仅仅是 struct， 比如 int , float32 等都可以有方法
+
+```go
+// Golang 中的方法作用在指定的数据类型上的(即：和指定的数据类型绑定)，因此自定义类型，都可以有方法，而不仅仅是 struct， 比如 int , float32 等都可以有方法
+
+func (i integer) print() {
+    fmt.Println("i=", i)
+}
+
+// 编写一个方法，可以改变i的值
+
+func (i *integer) change() {
+    *i = *i + 1
+}
+
+func main() {
+    var i integer = 10
+	i.print()
+	i.change()
+	fmt.Println("main中的i=", i)
+}
+```
+
+\4) 方法的访问范围控制的规则，和函数一样。**方法名首字母小写，只能在本包访问，方法首字母大写，可以在本包和其它包访问**。[讲解]
+
+\5) 如果一个类型实现了 String()这个方法，那么 fmt.Println 默认会调用这个变量的String()进行输出
+
+```go
+type Student struct {
+    Name string
+    Age  int
+}
+
+func (stu *Student) String() string {
+    str := fmt.Sprintf("Name=[%v], Age=[%v]", stu.Name, stu.Age)
+    return str
+}
+
+func main() {
+    stu1 := Student{
+		Name: "zs",
+		Age:  20,
+	}
+	fmt.Println(&stu1) // Name=[zs], Age=[20]
+}
+```
+
+### 10.2.7 方法的课堂练习题
+
+\1) 编写结构体(MethodUtils)，编程一个方法，方法不需要参数，在方法中打印一个10*8 的矩形，在 main 方法中调用该方法。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var mu MethodUtils
+    mu.Print()
+}
+
+type MethodUtils struct {
+}
+
+func (mu MethodUtils) Print() {
+    for i := 1; i <= 10; i++ {
+       for j := 1; j <= 8; j++ {
+          fmt.Print("*")
+       }
+       fmt.Println()
+    }
+}
+```
+
+\2) 编写一个方法，提供 m 和 n 两个参数，方法中打印一个 m*n 的矩形
+
+略
+
+\3) 编写一个方法算该矩形的面积(可以接收长 len，和宽 width)， 将其作为方法返回值。在main方法中调用该方法，接收返回的面积值并打印。
+
+略
+
+\4) 编写方法：判断一个数是奇数还是偶数
+
+略
+
+\5) 根据行、列、字符打印 对应行数和列数的字符，比如：行：3，列：2，字符*,则打印相应的效果
+
+略
+
+\6) 定义小小计算器结构体(Calcuator)，实现加减乘除四个功能
+
+> 实现形式 1：分四个方法完成
+>
+> 实现形式 2：用一个方法搞定
+
+### 10.2.8 方法的课后练习题
+
+\1) 在MethodUtils 结构体中编写个方法，从键盘接受整数1-9，打印对应的乘法表
+
+```go
+// 这里省略从键盘接受整数1-9
+func (mu MethodUtils) PrintMulTable(n int) {
+    for i := 1; i <= n; i++ {
+       for j := 1; j <= i; j++ {
+          fmt.Printf("%v * %v = %v\t", j, i, j*i)
+       }
+       fmt.Println()
+    }
+}
+```
+
+\2) 编写一个方法，使给定的一个二维数组(3 * 3) 转置
+
+```go
+func (mu MethodUtils) transpose(matrix [][]int) [][]int {
+    rows := len(matrix)
+    cols := len(matrix[0])
+    var res = make([][]int, cols)
+    // 初始化数组
+    for i := 0; i < cols; i++ {
+       res[i] = make([]int, rows)
+    }
+
+    for i := 0; i < rows; i++ {
+       for j := 0; j < cols; j++ {
+          res[j][i] = matrix[i][j]
+       }
+    }
+    return res
+}
+```
+
+### 10.2.9 方法和函数区别
+
+1) 调用方式不一样 
+
+   >  函数的调用方式: 函数名(实参列表) 
+   >
+   > 方法的调用方式: 变量.方法名(实参列表)
+
+2. 对于普通函数，接收者为值类型时，不能将指针类型的数据直接传递，反之亦然
+
+   ```go
+   func (p Person) test01() {
+       
+   }
+   
+   func (p *Person) test02() {
+       
+   }
+   
+   func main() {
+       // 调用时
+       p := Person{"tom"}
+       // 下面两个参数不能反过来传递
+       test01(p) 
+       test02(&p)  
+   }
+   ```
+
+3. 对于方法（如 struct 的方法），接收者为值类型时，可以直接用指针类型的变量调用方法，反过来同样也可以
+
+总结:
+
+\1) 不管调用形式如何，真正决定是值拷贝还是地址拷贝，看这个方法是和哪个类型绑定. 
+
+\2) 如果是和值类型，比如 (p Person) , 则是值拷贝， 如果和指针类型，比如是(p *Person) 则是地址拷贝。
+
+## 10.3 面向对象编程应用实例
