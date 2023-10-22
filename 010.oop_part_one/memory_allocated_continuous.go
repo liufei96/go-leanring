@@ -107,7 +107,7 @@ func (stu Student) getSum(n1 int, n2 int) int {
 	return n1 + n2
 }
 
-type Stu Student
+//type Stu Student
 
 func test01() {
 	var stu1 Student

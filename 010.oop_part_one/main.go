@@ -9,6 +9,8 @@ func main() {
 	oopDemo4()
 	oopDemo5()
 	oopDemo6()
+	oopDemo7()
+	oopDemo8()
 }
 
 // 张老太养了两只猫猫：一只名字叫小白，今年3岁，白色。还有一只叫小花，今年100岁，花色。
@@ -120,4 +122,47 @@ func oopDemo6() {
 	(*person).Name = "lucy"
 	person.Age = 20
 	fmt.Println(person)
+}
+
+type Stu struct {
+	Name string
+	Age  int
+}
+
+func oopDemo7() {
+	// 方式1
+	var stu1 = Stu{"小明", 19}
+	stu2 := Stu{"小明~", 20}
+
+	// 在创建结构体变量时，把名字和字段值写在一起，这种写法，就不依赖字段的定义顺序了
+	var stu3 = Stu{
+		Name: "jack",
+		Age:  19,
+	}
+
+	stu4 := Stu{
+		Age:  19,
+		Name: "lacy",
+	}
+
+	fmt.Println(stu1, stu2, stu3, stu4)
+}
+
+func oopDemo8() {
+	// 方式2,返回结构体指针类型
+	var stu5 = &Stu{"小王", 19}
+	stu6 := &Stu{"小王~", 20}
+
+	// 在创建结构体变量时，把名字和字段值写在一起，这种写法，就不依赖字段的定义顺序了
+	var stu7 = &Stu{
+		Name: "小李",
+		Age:  19,
+	}
+
+	stu8 := &Stu{
+		Age:  19,
+		Name: "小李～",
+	}
+
+	fmt.Println(*stu5, *stu6, *stu7, *stu8)
 }

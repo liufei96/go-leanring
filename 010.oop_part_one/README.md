@@ -776,3 +776,64 @@ func (mu MethodUtils) transpose(matrix [][]int) [][]int {
 \2) 如果是和值类型，比如 (p Person) , 则是值拷贝， 如果和指针类型，比如是(p *Person) 则是地址拷贝。
 
 ## 10.3 面向对象编程应用实例
+
+略
+
+## 10.4 创建结构体变量时指定字段值
+
+说明 
+
+Golang 在创建结构体实例(变量)时，可以直接指定字段的值
+
+方式 1
+
+```go
+type Stu struct {
+    Name string
+    Age  int
+}
+
+func oopDemo7() {
+    // 方式1
+    var stu1 = Stu{"小明", 19}
+    stu2 := Stu{"小明~", 20}
+
+    // 在创建结构体变量时，把名字和字段值写在一起，这种写法，就不依赖字段的定义顺序了
+    var stu3 = Stu{
+       Name: "jack",
+       Age:  19,
+    }
+
+    stu4 := Stu{
+       Age:  19,
+       Name: "lacy",
+    }
+
+    fmt.Println(stu1, stu2, stu3, stu4)
+}
+```
+
+方式2
+
+```go
+func oopDemo8() {
+    // 方式2,返回结构体指针类型
+    var stu5 = &Stu{"小王", 19}
+    stu6 := &Stu{"小王~", 20}
+
+    // 在创建结构体变量时，把名字和字段值写在一起，这种写法，就不依赖字段的定义顺序了
+    var stu7 = &Stu{
+       Name: "小李",
+       Age:  19,
+    }
+
+    stu8 := &Stu{
+       Age:  19,
+       Name: "小李～",
+    }
+
+    fmt.Println(*stu5, *stu6, *stu7, *stu8)
+}
+```
+
+## 10.5 工厂模式
