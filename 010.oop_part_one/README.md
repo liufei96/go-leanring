@@ -837,3 +837,59 @@ func oopDemo8() {
 ```
 
 ## 10.5 工厂模式
+
+### 10.5.1 说明
+
+Golang 的结构体没有构造函数，通常可以使用工厂模式来解决这个问题。Golang 的结构体没有构造函数，通常可以使用工厂模式来解决这个问题。
+
+### 10.5.2 看一个需求
+
+一个结构体的声明是这样的
+
+```go
+package model
+type Student struct {
+	Name string... 
+}
+```
+
+因为这里的 Student 的首字母 S 是大写的，如果我们想在其它包创建Student 的实例(比如main包)，引入 model 包后，就可以直接创建 Student 结构体的变量(实例)。但是问题来了，如果首字母是小写的，比如 是 type student struct {....} **就不不行了，怎么办---> 工厂模式来解决.**
+
+### 10.5.3 工厂模式来解决问题
+
+使用工厂模式实现跨包创建结构体实例(变量)的案例:
+
+如果 model 包的 **结构体变量首字母大写，引入后，直接使用, 没有问题**
+
+如果 model 包的 结构体变量首字母小写，引入后，不能直接使用, 可以工厂模式解决，看演示， 代码: student.go
+
+```go
+package model
+
+type student struct {
+    Name  string
+    Score float64
+}
+
+// 因为student首字母是小写，因此是只能通过当前包使用
+// 通过工厂模式解决
+func NewStudent(name string, score float64) *student {
+    return &student{
+       Name:  name,
+       Score: score,
+    }
+}
+```
+
+### 10.5.4 思考题
+
+同学们思考一下，如果 model 包的 student 的结构体的字段 Score 改成score，我们还能正常访问吗？又应该如何解决这个问题呢？
+
+> 不可以直接访问
+
+```go
+// 如果score的首字母小写，则外部不能直接访问，我们可以提供一个方法
+func (s *student) getScore() float64 {
+    return s.Score
+}
+```

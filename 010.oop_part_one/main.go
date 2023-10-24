@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
 	oopDemo1()
@@ -11,6 +13,8 @@ func main() {
 	oopDemo6()
 	oopDemo7()
 	oopDemo8()
+	oopDemo9()
+
 }
 
 // 张老太养了两只猫猫：一只名字叫小白，今年3岁，白色。还有一只叫小花，今年100岁，花色。
@@ -165,4 +169,9 @@ func oopDemo8() {
 	}
 
 	fmt.Println(*stu5, *stu6, *stu7, *stu8)
+}
+
+func oopDemo9() {
+	//var stu = model.NewStudent("zs", 80)
+	//fmt.Println(*stu)
 }
