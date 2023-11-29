@@ -881,3 +881,82 @@ Abc // ok
 | nil       | panic      | unit64 | print | println | real    |
 | recover   | string     | true   | unit  | unit8   | uintprt |
 
+## 2.21 常量
+
+### 2.21.1 常量介绍
+
+- 常量使用const修改
+
+- 常量在定义的时候，必须初始化
+
+- 常量不能修改
+
+- 常量只能修饰bool、数值类型(int、float系列)、string 类型
+
+- 语法：const identifier [type] = value
+
+- 举例说明，看看下面的写法是否正确
+
+  ```go
+  const name = "tom"  // ok
+  const tax float64 = 0.8  // ok
+  const a int    // error 未初始化
+  const b = 9 / 3  // ok
+  const c = getVal()  // err
+  ```
+
+### 2.21.2 常量使用注意事项
+
+1. 比较简单的写法
+
+   ```go
+   const (
+     a = 1
+     b = 1
+   )
+   fmt.Println(a, b)
+   ```
+
+2. 还有一种专业的写法
+
+   ```go
+   // iota是从0开始，每一行都是往下递增。注意是每一行
+   const (
+     c = iota
+     d
+     e
+     f
+   )
+   fmt.Println(c, d, e, f)  // 结果是。0 1 2 3
+   
+   const (
+     A    = iota
+     B    = iota
+     C, D = iota, iota
+   )
+   fmt.Println(A, B, C, D) // 0 1 2 2
+   
+   const (
+     A1 = iota
+     B2
+     _
+     C3
+   )
+   fmt.Println(A1, B2, C3) // 0 1 3    _表示跳过的意思
+   ```
+
+3. Golang 中没有常量名必须字母大写的规范，比如 TAX_RATE，比如：
+
+   ```go
+   // 比如 time.go 中定义的内容
+   const (
+       Nanosecond  Duration = 1
+       Microsecond          = 1000 * Nanosecond
+       Millisecond          = 1000 * Microsecond
+       Second               = 1000 * Millisecond
+       Minute               = 60 * Second
+       Hour                 = 60 * Minute
+   )
+   ```
+
+4. 仍然通过**首字母的大小写**来控制常量的访问范围
