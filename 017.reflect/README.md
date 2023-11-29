@@ -214,3 +214,114 @@ func reflectTest02(b interface{}) {
 ```
 
 ## 17.5 反射的注意事项和细节
+
+1. reflect.Value.Kind，获取变量的类别，返回的是一个常量
+
+![image-20231128235018976](./img/17-反射中kind的介绍.png)
+
+2) Type 和 Kind 的区别
+
+   ```go
+   // Type 是类型，Kind 是类别，Type和kind可能是相同的
+   // 比如：var num int = 10   num的Type是int，Kind也是int
+   // 比如：var stu Student    stu的type是pkg1.Student, Kind是struct
+   ```
+
+3) 通过反射可以在让变量在interface{}和Reflect.Value之间进行转换，这点在前面画过的示意图并在快读入门案例中讲解过了，这里我们看下是如何在diamanté中体现的
+
+4) 使用反射的方式来获取变量的值（并返回对应的类型），要求数据类型匹配，比如x是int，那么就应该使用reflect.Value(x).int()，而不能使用其它的，否则报panic![image-20231129000519003](./img/17-反射-func-int说明.png)
+
+5. 通过反射的来修改变量。注意使用SetXxx()方法来设置需要通过对应的指针类型来完成，这样才能改变传入的值，同时需要使用到 reflect.Value.Elem()方法
+
+   ```go
+   package main
+   
+   import (
+       "fmt"
+       "reflect"
+   )
+   
+   func main() {
+       var num = 10
+       testInt(&num)
+       fmt.Println("num=", num)
+   }
+   
+   func testInt(b interface{}) {
+       val := reflect.ValueOf(b)
+       fmt.Printf("val type=%T\n", val)
+       val.Elem().SetInt(20)
+       fmt.Printf("val=%v\n", val) // 这里val返回的是地址
+   }
+   ```
+
+6. Reflect.Value.Elem() 应该如何理解？
+
+   ```go
+   func main() {
+   
+       var n int = 100
+       fn := reflect.ValueOf(&n)
+       fn.Elem().SetInt(200)
+       fmt.Printf("n=%v\n", n) // n=200
+   
+       // fn.Elem() 用于获取指针指向变量，类似下面
+       var num1 = 100
+       var b *int = &num1
+       *b = 3
+       fmt.Println("num1=", num1) // num1= 3
+   }
+   ```
+
+## 17.6 反射课堂练习
+
+1. 给你一个变量 var v float64 = 1.2 , 请使用反射来得到它的 reflect.Value, 然后获取对应的Type, Kind 和值，并将 reflect.Value 转换成 interface{} , 再将 interface{} 转换成float64
+
+```go
+func expDemo1(b interface{}) {
+    // 获取Type
+    rTyp := reflect.TypeOf(b)
+    fmt.Println("rType=", rTyp) // rType= float64
+
+    rKind := rTyp.Kind()
+    fmt.Println("rKind=", rKind) // rKind= float64
+
+    // 获取rVal
+    rVal := reflect.ValueOf(b)
+    fmt.Println("rVal=", rVal) // rVal= 1.2
+
+    rKind2 := rVal.Kind()
+    fmt.Println("rKind2=", rKind2) // rKind2= float64
+
+    // 将reflect.Value转成interface
+    iV := rVal.Interface()
+    fmt.Println("iV=", iV) // iV= 1.2
+
+    // 再将interface{} 转成float
+    val := iV.(float64)
+    fmt.Println("val=", val) // val= 1.2
+}
+```
+
+2. 看段代码，判断是否正确，为什么？
+
+```go
+func expDemo2() {
+    var str string = "tom"
+    fs := reflect.ValueOf(str)  // 这里应该传入指针
+    fs.SetString("jack")        // 这里要通过Elem()获取指针然后取修改值
+    fmt.Printf("%v\n", str)
+}
+
+// 下面是正确的做法
+func expDemo2() {
+	var str string = "tom"
+	fs := reflect.ValueOf(&str)
+	fs.Elem().SetString("jack")
+	fmt.Printf("%v\n", str)
+}
+```
+
+> 这段代码编译是不会报错，但是运行会报错
+
+## 17.7 反射最佳实践

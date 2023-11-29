@@ -69,6 +69,13 @@ func reflectTest02(b interface{}) {
 	// 2. 获取到reflect.Value
 	rVal := reflect.ValueOf(b)
 
+	// 3. 获取 变量对应的kind
+	// (1) rVal.Kind() =>
+	kind1 := rVal.Kind()
+	// (2) rType.Kind() =>
+	kind2 := vTyp.Kind()
+	fmt.Printf("kind1=%v, kind2=%v \n", kind1, kind2) // 两个结果都是一样，都是struct
+
 	// 下面我们将 rVal 转成 interface{}
 	iV := rVal.Interface()
 	fmt.Printf("iv=%v iv type=%T \n", iV, iV)
