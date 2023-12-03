@@ -417,3 +417,198 @@ func TestStruct(a interface{}) {
     fmt.Println("res=", res[0].Int())
 }
 ```
+
+2) 使用反射的方式来获取结构体的 tag 标签, 遍历字段的值，修改字段值，调用结构体方法(要求：通过传递地址的方式完成, 在前面案例上修改即可)
+
+```go
+// 修改结构体中的值
+func TestStruct2(a interface{}) {
+    // 获取 reflect.Type 类型
+    typ := reflect.TypeOf(a)
+    // 获取 reflect.Value 类型
+    val := reflect.ValueOf(a)
+    // 获取a对应的类别，注意这里需要使用val
+    kd := val.Kind()
+    // 如果传入的不是Pointer,则退出，因为这里是修改，需要传入指针
+    // 这里也可以用 kd != reflect.Ptr
+    if kd != reflect.Pointer && val.Elem().Kind() == reflect.Struct {
+       fmt.Println("expect struct")
+       return
+    }
+    // 获取结构体有几个字段
+    num := val.Elem().NumField()
+    fmt.Printf("struct has %d fields\n", num)
+    // 修改属性值
+    val.Elem().Field(0).SetString("白骨精2")
+    //val.Elem().FieldByName("Name").SetString("白骨精")
+
+    // 获取tag
+    tag := typ.Elem().Field(0).Tag.Get("json")
+    fmt.Printf("tag=%s\n", tag)
+
+    // 获取方法的数量
+    numOfMethod := val.Elem().NumMethod()
+    fmt.Printf("struct has %d methods\n", numOfMethod)
+
+    val.Elem().Method(1).Call(nil) // 调用的是print方法
+}
+
+func main() {
+  animal := Animal{
+		Name:  "黄大仙",
+		Age:   "400",
+		Score: 87.9,
+	}
+  // 修改Name的值，这里传入的是指针。注意对于指针获取和操作属性和方法都是使用val.Elem()
+	TestStruct2(&animal)
+	fmt.Println("修改后的Name=", animal.Name)
+}
+```
+
+3) 定义了两个函数 test1 和 test2，定义一个适配器函数用作统一处理接口【了解】
+
+```go
+package test
+
+import (
+    "reflect"
+    "testing"
+)
+
+// 案例3: 定义了两个函数 test1 和 test2，定义一个适配器函数用作统一处理接口【了解】
+func TestReflectFunc(t *testing.T) {
+    var (
+       function reflect.Value
+       inValue  []reflect.Value
+       n        int
+    )
+
+    bridge := func(call interface{}, args ...interface{}) {
+       n = len(args)
+       inValue = make([]reflect.Value, n)
+       for i := 0; i < n; i++ {
+          inValue[i] = reflect.ValueOf(args[i])
+       }
+       function = reflect.ValueOf(call)
+       function.Call(inValue)
+    }
+
+    call1 := func(v1 int, v2 int) {
+       t.Log(v1, v2)
+    }
+
+    call2 := func(v1 int, v2 int, s string) {
+       t.Log(v1, v2, s)
+    }
+
+    bridge(call1, 1, 2)
+    bridge(call2, 1, 2, "test2")
+}
+```
+
+4. 使用反射操作任意结构体类型：【了解】
+
+```go
+type user struct {
+    UserId string
+    Name   string
+}
+
+// 4，使用反射操作任意结构体类型：【了解】
+func TestReflectStruct(t *testing.T) {
+    var (
+       model *user
+       sv    reflect.Value
+    )
+    model = &user{}
+    sv = reflect.ValueOf(model)
+    t.Log("reflect.ValueOf", sv.Kind().String())
+    sv = sv.Elem()
+    t.Log("reflect.ValueOf.Elem", sv.Kind().String())
+    sv.FieldByName("UserId").SetString("123")
+    sv.FieldByName("Name").SetString("zhangsan")
+    t.Log("model", model)
+}
+```
+
+5) 使用反射创建并操作结构体
+
+```go
+// 5. 使用反射创建并操作结构体
+func TestReflectStructPtr(t *testing.T) {
+    var (
+       model *user
+       st    reflect.Type
+       elem  reflect.Value
+    )
+    st = reflect.TypeOf(model)                       // 获取类型 *user
+    t.Log("reflect.ValueOf", st.Kind().String())     // ptr
+    st = st.Elem()                                   // st指向的类型
+    t.Log("reflect.TypeOf.Elem", st.Kind().String()) // struct
+    // New返回一个Value类型值，该值持有一个指向类型为type的新申请的零值的指针
+    elem = reflect.New(st)
+    t.Log("reflect.New", elem.Kind().String())
+    t.Log("reflect.New.Elem", elem.Elem().Kind().String())
+    // model就是创建的user结构体变量（实例）
+    model = elem.Interface().(*user) // model是*user 它的指向和elem是一样的
+    elem = elem.Elem()               // 取得elem指向的值
+    elem.FieldByName("UserId").SetString("456")
+    elem.FieldByName("Name").SetString("lisi")
+    t.Log("model model.Name", model, model.Name)
+}
+```
+
+## 17.8 课后练习
+
+> 1. 编写一个Cal 结构体，有两个字段Num1和Num2
+> 2. 方法 GetSub(name string)
+> 3. 使用反射遍历Cal结构体所有的字段信息
+> 4. 使用反射机制完成对GetSub 的调用，输出形式为 "tom 完成了减法运算，8 - 3 = 5"
+
+```go
+package main
+
+import (
+    "fmt"
+    "reflect"
+)
+
+func main() {
+    cal := Cal{
+       Num1: 8,
+       Num2: 3,
+    }
+    testReflectStruct(cal)
+}
+
+type Cal struct {
+    Num1 int32 `json:"num1"`
+    Num2 int32 `json:"num2"`
+}
+
+func (cl Cal) GetSub(name string) {
+    res := cl.Num1 - cl.Num2
+    fmt.Printf("%s 完成了减法运行，%d - %d = %d ", name, cl.Num1, cl.Num2, res)
+}
+
+func testReflectStruct(b interface{}) {
+    // 获取Cal的字段信息
+    typ := reflect.TypeOf(b)
+
+    val := reflect.ValueOf(b)
+    fieldNum := val.NumField()
+    fmt.Printf("struct has %d fields\n", fieldNum)
+    for i := 0; i < fieldNum; i++ {
+       // 获取到struct 标签，注意需要通过 reflect.Type 类型来获取
+       tagVal := typ.Field(i).Tag.Get("json")
+       // 如果该字段于 tag 标签就显示，否则就不显示
+       if tagVal != "" {
+          fmt.Printf("Field %d: tag为=%v\n", i, tagVal)
+       }
+    }
+
+    var params []reflect.Value
+    params = append(params, reflect.ValueOf("tom"))
+    val.MethodByName("GetSub").Call(params)
+}
+```
